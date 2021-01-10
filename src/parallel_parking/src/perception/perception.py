@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 class VehiclePerception:
     def __init__(self, model_name='gem', resolution=0.1, side_range=(-20., 20.), 
             fwd_range=(-20., 20.), height_range=(-1.6, 0.5)):
-        self.lidar = LidarProcessing(resolution=resolution, side_range=side_range, fwd_range=fwd_range, height_range=height_range)
+        # self.lidar = LidarProcessing(resolution=resolution, side_range=side_range, fwd_range=fwd_range, height_range=height_range)
         
         self.bridge = CvBridge()
         self.cameraSub = rospy.Subscriber("/front_single_camera/front_single_camera/image_raw", Image, self.imageCallback)
@@ -40,7 +40,7 @@ class VehiclePerception:
         # Get processed reading from the Lidar on the vehicle
         # Input: None
         # Output: Distance between the vehicle and object in the front
-        res = self.lidar.processLidar()
+        res = None # self.lidar.processLidar()
         return res
 
     def gpsReading(self):
@@ -82,6 +82,22 @@ class LidarProcessing:
         
         self.x_front = float('nan')
         self.y_front = float('nan')
+
+    def gpsReading(self):
+        # Get the current state of the vehicle
+        # Input: None
+        # Output: ModelState, the state of the vehicle, contain the
+        #   position, orientation, linear velocity, angular velocity
+        #   of the vehicle
+        rospy.wait_for_service('/gazebo/get_model_state')
+        try:
+            serviceResponse = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+            modelState = serviceResponse(model_name="gem")
+        except rospy.ServiceException as exc:
+            rospy.loginfo("Service did not process request: "+str(exc))
+            modelState = GetModelStateResponse()
+            modelState.success = False
+        return modelState
 
     def __pointCloudHandler(self, data):
         """
@@ -175,13 +191,16 @@ class LidarProcessing:
         # plt.imshow(im)
         # plt.pause(0.005)
         self.grid[self.vehicle_x/10][self.vehicle_y/10] = self.grid.CUR
+        print(self.vehicle_x/10, self.vehicle_y/10)
         for i in range(im.shape[0]):
             for j in range(im.shape[1]):
                 if im[i][j] != 0:
                     x = i / 10
                     y = j / 10 
                     self.grid[x][y] = self.grid.OCCUPIED
-        self.grid.publish()
+
+        currState = self.gpsReading()
+        self.grid.publish(currState.pose.position.x, currState.pose.position.y)
         self.grid.show()
 
         center = (self.vehicle_x, self.vehicle_y)

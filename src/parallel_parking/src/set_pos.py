@@ -60,8 +60,8 @@ def set_position(x = 0,y = 0, name='gem'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Set the x, y position of the vehicle')
 
-    x_default = -10
-    y_default = -98
+    x_default = -4.931770
+    y_default = -97.995846
 
     parser.add_argument('--x', type = float, help = 'x position of the vehicle.', default = x_default)
     parser.add_argument('--y', type = float, help = 'y position of the vehicle.', default = y_default)

@@ -1,48 +1,47 @@
-import pickle
+# from parallel_parking.src.decision.parking import calcParking
+import rospy
+from nav_msgs.msg import OccupancyGrid, MapMetaData
+import numpy as np
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt 
+from parking import calcParking
 
 class VehicleDecision():
-    def __init__(self, fn):
-        self.waypoint_list = pickle.load(open(fn,'rb')) # a list of waypoints
-        self.pos_idx = int(1)
-        self.vehicle_state = 'middle'
-        self.counter = 0
+    def __init__(self):
+        self.subGrid = rospy.Subscriber("/gem/GridMap", OccupancyGrid, self.gridCallback)
+
+    def gridCallback(self, grid):
+        gridMap = np.array(grid.data).reshape((42, 42))
+        info = grid.info
+        origin = info.origin
         
-    def get_ref_state(self, currState, perceptionInput):
-        """
-            Get the reference state for the vehicle according to the current state and result from perception module
-            Inputs: 
-                currState: ModelState, the current state of vehicle
-                perceptionInput: float, currently the distance between vehicle and obstacle in front
-            Outputs: reference state position and velocity of the vehicle 
-        """
+        obstacle = np.where(gridMap == 1)
+        print(origin)
+        # print(zip(obstacle[0], obstacle[1]))
+        obstacle = zip(-obstacle[0] + origin.position.x + 20, -obstacle[1] + origin.position.y + 20)
+        kmeans = KMeans(n_clusters=2, random_state=0).fit(obstacle)
+        print(obstacle)
+        print(kmeans.labels_)
+        print(kmeans.cluster_centers_)
 
-        curr_x = currState.pose.position.x
-        curr_y = currState.pose.position.y
-        front_dist = perceptionInput
-
-        # If the distance between vehicle and obstacle in front is less than 15, stop the vehicle
-        if front_dist < 15:
-            target_x = curr_x
-            target_y = curr_y
-            ref_v = -1
+        k1, k2 = kmeans.cluster_centers_
+        
+        ye = k1[1]
+        if k2[0] < k1[0]:
+            xe = k2[0]
         else:
-            target_x = self.waypoint_list[self.pos_idx][0]
-            target_y = self.waypoint_list[self.pos_idx][1]
+            xe = k1[0]
 
-            curr_x = currState.pose.position.x
-            curr_y = currState.pose.position.y
-            
-            distToTargetX = abs(target_x - curr_x)
-            distToTargetY = abs(target_y - curr_y)
+        calcParking(xe, origin.position.y)
+        # plt.imshow(gridMap)
+        # plt.xlim(0, 41)
+        # plt.ylim(0, 41)
+        # plt.pause(0.01)
 
-            if ((distToTargetX < 0.5 and distToTargetY < 0.5)) or self.counter > 100:
-                self.counter = 0
-                self.pos_idx += 1
-                self.pos_idx = int(self.pos_idx % len(self.waypoint_list))
-                print("reached",self.waypoint_list[self.pos_idx-1][0],self.waypoint_list[self.pos_idx-1][1],
-                    "next",self.waypoint_list[self.pos_idx][0],self.waypoint_list[self.pos_idx][1])
-            else:
-                self.counter += 1
-            ref_v = 5
+        
+if __name__ == "__main__":
+    rospy.init_node("VechileDecision")
 
-        return [target_x, target_y, ref_v]
+    VehicleDecision()
+
+    rospy.spin()

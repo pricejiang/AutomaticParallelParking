@@ -10,6 +10,14 @@ class VehicleController():
         self.controlPub = rospy.Publisher("/ackermann_cmd", AckermannDrive, queue_size = 1)
         self.model_name = model_name
 
+    def stop(self):
+        newAckermannCmd = AckermannDrive()
+        newAckermannCmd.speed = 0
+        newAckermannCmd.steering_angle = 0
+        # print(v, delta)
+        print(newAckermannCmd)
+        self.controlPub.publish(newAckermannCmd)
+
     def execute(self, currentPose, targetPose):
         """
             This function takes the current state of the vehicle and 
@@ -24,30 +32,33 @@ class VehicleController():
                                            currentPose.pose.orientation.z,
                                            currentPose.pose.orientation.w)
         
-        target_x = targetPose[0]
-        target_y = targetPose[1]
-        target_v = targetPose[2]
+        print("target ", targetPose )
+        target_v = targetPose[1]
+        target_orientation = targetPose[0]
         
         k_s = 0.1
         k_ds = 1
         k_n = 0.1
+        k_theta = 1
 
         #compute errors
-        xError = (target_x - currentPose.pose.position.x) * np.cos(currentEuler[2]) + (target_y - currentPose.pose.position.y) * np.sin(currentEuler[2])
-        yError = -(target_x - currentPose.pose.position.x) * np.sin(currentEuler[2]) + (target_y - currentPose.pose.position.y) * np.cos(currentEuler[2])
-        curr_v = np.sqrt(currentPose.twist.linear.x**2 + currentPose.twist.linear.y**2)
+        thetaError = target_orientation - currentEuler[2]
+        curr_v = -np.sqrt(currentPose.twist.linear.x**2 + currentPose.twist.linear.y**2)
         vError = target_v - curr_v
         
-        delta = k_n*yError
         # Checking if the vehicle need to stop
-        if target_v > 0:
-            v = xError*k_s + vError*k_ds
+        v = vError*k_ds
+        delta = k_theta*thetaError          
+
+        if target_orientation == 0:
+            delta = -0.47
         else:
-            v = xError*k_s - 0.05*k_ds            
+            delta = 0.47
 
         #Send computed control input to vehicle
         newAckermannCmd = AckermannDrive()
         newAckermannCmd.speed = v
         newAckermannCmd.steering_angle = delta
+        print(newAckermannCmd)
         self.controlPub.publish(newAckermannCmd)
 
