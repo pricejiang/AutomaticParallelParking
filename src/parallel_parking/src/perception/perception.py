@@ -252,6 +252,6 @@ class LidarProcessing:
 if __name__ == "__main__":
 
     rospy.init_node("perception")
-    VehiclePerception('gem')
+    LidarProcessing(resolution=0.1, side_range=(-20., 20.), fwd_range=(-20., 20.), height_range=(-1.6, 0.5))
 
     rospy.spin()

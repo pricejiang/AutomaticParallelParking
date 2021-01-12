@@ -51,9 +51,9 @@ class VehicleController():
         delta = k_theta*thetaError          
 
         if target_orientation == 0:
-            delta = -0.47
+            delta = -0.57
         else:
-            delta = 0.47
+            delta = 0.57
 
         #Send computed control input to vehicle
         newAckermannCmd = AckermannDrive()
