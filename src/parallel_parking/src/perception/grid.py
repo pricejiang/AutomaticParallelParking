@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Deque, List, Tuple
+# from typing import Deque, List, Tuple
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from geometry_msgs.msg import Pose
 import rospy
 
 
-Grid = Tuple[int, int]
+# Grid = Tuple[int, int]
 
 class GridMap:	
     UNKNOWN = -1	

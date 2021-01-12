@@ -37,16 +37,16 @@ def calcParking(xe, ys, dy):
     Lmin = p + np.sqrt(Re_min*Re_min - Ri_min*Ri_min)
 
     R_min_ = Ri_min + w/2
-    
-    xc1 = xe 
+
+    xc1 = xe
     # print(yc1, xc1)
     # Assume start position of y
-    # y is car_width + 0.5 meters away 
+    # y is car_width + 0.5 meters away
     # xs = Lmin + p*2
     # ys = ye + w + 0.5
 
     ye = ys - w - dy # XXX change 5 to a variable
-    yc2 = ys - R_min_ 
+    yc2 = ys - R_min_
     yc1 = ye + R_min_
     yt = (yc1 + yc2)/2
 
@@ -70,7 +70,7 @@ def calcParking(xe, ys, dy):
 
     x = np.arange(xc1, xt, 0.1)
     y = -np.sqrt(R_min_*R_min_ - (x-xc1)*(x-xc1)) + yc1
-    xp += list(x) 
+    xp += list(x)
     yp += list(y)
     x = np.arange(xt, xc2, 0.1)
     y = np.sqrt(R_min_*R_min_ - (x-xc2)*(x-xc2)) + yc2
@@ -107,7 +107,7 @@ def calcParking(xe, ys, dy):
         arr.append(eulers[2])
         # move(p, quat)
         # time.sleep(0.1)
-    print(arr)
+    return max(arr)
 
     # fig, ax = plt.subplots()
     # ax.plot(xp, yp, 'o', color='black')

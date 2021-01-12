@@ -3,18 +3,21 @@ import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 import numpy as np
 from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from parking import calcParking
+from std_msgs.msg import Float32
 
 class VehicleDecision():
     def __init__(self):
         self.subGrid = rospy.Subscriber("/gem/GridMap", OccupancyGrid, self.gridCallback)
+        self.pubParking = rospy.Publisher("/gem/ParkingInfo", Float32, queue_size=1)
+        self.pubFlag = 0
 
     def gridCallback(self, grid):
         gridMap = np.array(grid.data).reshape((42, 42))
         info = grid.info
         origin = info.origin
-          
+
         obstacle = np.where(gridMap == 1)
         print(origin)
         # print(zip(obstacle[0], obstacle[1]))
@@ -38,20 +41,23 @@ class VehicleDecision():
         dy = mindist - 0.7
         print(nearest_obs)
         k1, k2 = kmeans.cluster_centers_
-        
+
         ye = k1[1]
         if k2[0] < k1[0]:
             xe = k2[0]
         else:
             xe = k1[0]
 
-        calcParking(xe, origin.position.y, dy)
+        centerTheta = calcParking(xe, origin.position.y, dy)
         # plt.imshow(gridMap)
         # plt.xlim(0, 41)
         # plt.ylim(0, 41)
         # plt.pause(0.01)
+        data = Float32()
+        data.data = centerTheta
+        self.pubParking.publish(data)
 
-        
+
 if __name__ == "__main__":
     rospy.init_node("VechileDecision")
 
