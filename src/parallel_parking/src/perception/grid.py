@@ -41,12 +41,7 @@ class GridMap:
         mapInfo = MapMetaData()
         # NOTE For the map info, we might need to set the resolution and origin later
         mapInfo.width = GridMap.GRID_WIDTH
-        mapInfo.height = GridMap.GRID_WIDTH
-        # position = Pose()
-        # position.position.x = carX 
-        # position.position.y = carY
-        # mapInfo.origin = position
-        # mapInfo.resolution = XXX
+        mapInfo.height = GridMap.GRID_WIDTHX
         grid_map.info = mapInfo
         # Need to flatten the grid map array to fit into the message
         grid_map.data = self.__grid_map.flatten().tolist()
@@ -58,11 +53,6 @@ class GridMap:
         # NOTE For the map info, we might need to set the resolution and origin later
         mapInfo.width = GridMap.GRID_WIDTH
         mapInfo.height = GridMap.GRID_WIDTH
-        # position = Pose()
-        # position.position.x = carX 
-        # position.position.y = carY
-        # mapInfo.origin = position
-        # mapInfo.resolution = XXX
         grid_map.info = mapInfo
         # Need to flatten the grid map array to fit into the message
         grid_map.data = self.__grid_map.flatten().tolist()

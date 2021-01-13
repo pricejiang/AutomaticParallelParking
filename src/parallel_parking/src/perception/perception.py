@@ -166,15 +166,6 @@ class LidarProcessing:
 
         pixel_vals = scale_to_255(pixel_vals, min_val=self.height_range[0], max_val=self.height_range[1])
         
-        # Getting sensor reading for front       
-        # filter_front = np.logical_and((y_points>-3), (y_points<3))
-        # filter_front = np.logical_and(filter_front, x_points > 0)
-        # filter_front = np.logical_and(filter_front, pixel_vals > 128)
-        # indices = np.argwhere(filter_front).flatten()
-
-        # self.x_front = np.mean(x_points[indices])
-        # self.y_front = np.mean(y_points[indices])
-
         # convert points to image coords with resolution
         x_img = np.floor(-y_points / self.resolution).astype(np.int32)
         y_img = np.floor(-x_points / self.resolution).astype(np.int32)
@@ -189,9 +180,6 @@ class LidarProcessing:
         img = im.astype(np.uint8)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-        # print(im.shape)
-        # plt.imshow(im)
-        # plt.pause(0.005)
         self.grid[self.vehicle_x/10][self.vehicle_y/10] = self.grid.CUR
         print(self.vehicle_x/10, self.vehicle_y/10)
         for i in range(im.shape[0]):
@@ -200,37 +188,8 @@ class LidarProcessing:
                     x = i / 10
                     y = j / 10 
                     self.grid[x][y] = self.grid.OCCUPIED
-
-        # currState = self.gpsReading()
-        self.constructedMap = self.grid.constructMap()
-        # self.grid.show()
-
-
-    # def convert_to_image(self, x, y):
-    #     """
-    #         Convert point in vehicle frame to position in image frame
-    #         Inputs: 
-    #             x: float, the x position of point in vehicle frame
-    #             y: float, the y position of point in vehicle frame
-    #         Outputs: Float, the x y position of point in image frame 
-    #     """
-
-    #     x_img = np.floor(-y / self.resolution).astype(np.int32)
-    #     y_img = np.floor(-x / self.resolution).astype(np.int32)
-
-    #     x_img -= int(np.floor(self.side_range[0] / self.resolution))
-    #     y_img += int(np.ceil(self.fwd_range[1] / self.resolution))
-    #     return (x_img, y_img)
-
-    # def processLidar(self):
-    #     """
-    #         Compute the distance between vehicle and object in the front
-    #         Inputs: None
-    #         Outputs: Float, distance between vehicle and object in the front 
-    #     """
-    #     front = np.sqrt(self.x_front**2+self.y_front**2)
         
-    #     return front
+        self.constructedMap = self.grid.constructMap()
 
     def get_lidar_reading(self):
         return self.constructedMap

@@ -35,9 +35,10 @@ def run_model(model_name):
                                        currState.pose.orientation.w)
 
     init_euler = currentEuler[2]
-
+    centerTheta += init_euler
     refState = [flag, -1.39136710179663975]
     controlModule.execute(currState, refState)
+    print("centerTheta: ", centerTheta)
     while not rospy.is_shutdown():
         # res = sensors.lidarReading()
         if centerTheta == 0:

@@ -39,12 +39,6 @@ def calcParking(xe, ys, dy):
     R_min_ = Ri_min + w/2
 
     xc1 = xe
-    # print(yc1, xc1)
-    # Assume start position of y
-    # y is car_width + 0.5 meters away
-    # xs = Lmin + p*2
-    # ys = ye + w + 0.5
-
     ye = ys - w - dy # XXX change 5 to a variable
     yc2 = ys - R_min_
     yc1 = ye + R_min_
