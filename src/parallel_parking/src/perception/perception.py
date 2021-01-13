@@ -14,21 +14,21 @@ import matplotlib.pyplot as plt
 class VehiclePerception:
     def __init__(self, model_name='gem', resolution=0.1, side_range=(-20., 20.), 
             fwd_range=(-20., 20.), height_range=(-1.6, 0.5)):
-        # self.lidar = LidarProcessing(resolution=resolution, side_range=side_range, fwd_range=fwd_range, height_range=height_range)
+        self.lidar = LidarProcessing(resolution=resolution, side_range=side_range, fwd_range=fwd_range, height_range=height_range)
         
         self.bridge = CvBridge()
-        self.cameraSub = rospy.Subscriber("/front_single_camera/front_single_camera/image_raw", Image, self.imageCallback)
+        # self.cameraSub = rospy.Subscriber("/front_single_camera/front_single_camera/image_raw", Image, self.imageCallback)
         self.raw_image = None
         self.model_name = model_name
 
-    def imageCallback(self, data):
-        try:
-            # Convert a ROS image message into an OpenCV image
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
+    # def imageCallback(self, data):
+    #     try:
+    #         # Convert a ROS image message into an OpenCV image
+    #         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+    #     except CvBridgeError as e:
+    #         print(e)
         
-        self.raw_img = cv_image.copy()
+    #     self.raw_img = cv_image.copy()
     
     def cameraReading(self):
         # Get a image from the camera on the vehicle
@@ -40,7 +40,7 @@ class VehiclePerception:
         # Get processed reading from the Lidar on the vehicle
         # Input: None
         # Output: Distance between the vehicle and object in the front
-        res = None # self.lidar.processLidar()
+        res = self.lidar.get_lidar_reading() # self.lidar.processLidar()
         return res
 
     def gpsReading(self):
@@ -79,25 +79,27 @@ class LidarProcessing:
         self.vehicle_y = y_img + int(np.ceil(self.fwd_range[1] / self.resolution))
 
         self.grid = GridMap()
+
+        self.constructedMap = None
         
         self.x_front = float('nan')
         self.y_front = float('nan')
 
-    def gpsReading(self):
-        # Get the current state of the vehicle
-        # Input: None
-        # Output: ModelState, the state of the vehicle, contain the
-        #   position, orientation, linear velocity, angular velocity
-        #   of the vehicle
-        rospy.wait_for_service('/gazebo/get_model_state')
-        try:
-            serviceResponse = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-            modelState = serviceResponse(model_name="gem")
-        except rospy.ServiceException as exc:
-            rospy.loginfo("Service did not process request: "+str(exc))
-            modelState = GetModelStateResponse()
-            modelState.success = False
-        return modelState
+    # def gpsReading(self):
+    #     # Get the current state of the vehicle
+    #     # Input: None
+    #     # Output: ModelState, the state of the vehicle, contain the
+    #     #   position, orientation, linear velocity, angular velocity
+    #     #   of the vehicle
+    #     rospy.wait_for_service('/gazebo/get_model_state')
+    #     try:
+    #         serviceResponse = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+    #         modelState = serviceResponse(model_name="gem")
+    #     except rospy.ServiceException as exc:
+    #         rospy.loginfo("Service did not process request: "+str(exc))
+    #         modelState = GetModelStateResponse()
+    #         modelState.success = False
+    #     return modelState
 
     def __pointCloudHandler(self, data):
         """
@@ -199,55 +201,39 @@ class LidarProcessing:
                     y = j / 10 
                     self.grid[x][y] = self.grid.OCCUPIED
 
-        currState = self.gpsReading()
-        self.grid.publish(currState.pose.position.x, currState.pose.position.y)
-        self.grid.show()
+        # currState = self.gpsReading()
+        self.constructedMap = self.grid.constructMap()
+        # self.grid.show()
 
-        center = (self.vehicle_x, self.vehicle_y)
-        cv2.circle(img, center, 5, (0,0,255), -1, 8, 0)
+
+    # def convert_to_image(self, x, y):
+    #     """
+    #         Convert point in vehicle frame to position in image frame
+    #         Inputs: 
+    #             x: float, the x position of point in vehicle frame
+    #             y: float, the y position of point in vehicle frame
+    #         Outputs: Float, the x y position of point in image frame 
+    #     """
+
+    #     x_img = np.floor(-y / self.resolution).astype(np.int32)
+    #     y_img = np.floor(-x / self.resolution).astype(np.int32)
+
+    #     x_img -= int(np.floor(self.side_range[0] / self.resolution))
+    #     y_img += int(np.ceil(self.fwd_range[1] / self.resolution))
+    #     return (x_img, y_img)
+
+    # def processLidar(self):
+    #     """
+    #         Compute the distance between vehicle and object in the front
+    #         Inputs: None
+    #         Outputs: Float, distance between vehicle and object in the front 
+    #     """
+    #     front = np.sqrt(self.x_front**2+self.y_front**2)
         
-        # center = self.convert_to_image(self.x_front, self.y_front)
-        # cv2.circle(img, center, 5, (0,255,0), -1, 8, 0)
-        # if not np.isnan(self.x_front) and not np.isnan(self.y_front):
-        #     cv2.arrowedLine(img, (self.vehicle_x,self.vehicle_y), center, (255,0,0))
-        
-        # x1, y1 = self.convert_to_image(20,3)
-        # x2, y2 = self.convert_to_image(0,-3)
-        # cv2.rectangle(img, (x1, y1), (x2, y2), (255,0,0))
-
-        birds_eye_im = self.cvBridge.cv2_to_imgmsg(img, 'bgr8')
-
-        self.birdsEyeViewPub.publish(birds_eye_im)
-
-
-    def convert_to_image(self, x, y):
-        """
-            Convert point in vehicle frame to position in image frame
-            Inputs: 
-                x: float, the x position of point in vehicle frame
-                y: float, the y position of point in vehicle frame
-            Outputs: Float, the x y position of point in image frame 
-        """
-
-        x_img = np.floor(-y / self.resolution).astype(np.int32)
-        y_img = np.floor(-x / self.resolution).astype(np.int32)
-
-        x_img -= int(np.floor(self.side_range[0] / self.resolution))
-        y_img += int(np.ceil(self.fwd_range[1] / self.resolution))
-        return (x_img, y_img)
-
-    def processLidar(self):
-        """
-            Compute the distance between vehicle and object in the front
-            Inputs: None
-            Outputs: Float, distance between vehicle and object in the front 
-        """
-        front = np.sqrt(self.x_front**2+self.y_front**2)
-        
-        return front
+    #     return front
 
     def get_lidar_reading(self):
-        pass
+        return self.constructedMap
 
 if __name__ == "__main__":
 
