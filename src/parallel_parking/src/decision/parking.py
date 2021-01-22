@@ -48,11 +48,11 @@ def calcParking(xe, ys, dy):
 
     xs = xc2 = 2*xt - xc1
 
-    print("C1: ", xc1, yc1)
-    print("C2: ", xc2, yc2)
-    print("R~min: ", R_min_)
-    print("Ri min: ", Ri_min)
-    print("Re min: ", Re_min)
+    # print("C1: ", xc1, yc1)
+    # print("C2: ", xc2, yc2)
+    # print("R~min: ", R_min_)
+    # print("Ri min: ", Ri_min)
+    # print("Re min: ", Re_min)
 
     x = [xs, xe, xc1, xc2, xt]
     y = [ys, ye, yc1, yc2, yt]
@@ -71,7 +71,7 @@ def calcParking(xe, ys, dy):
     xp += list(x)
     yp += list(y)
 
-    print(zip(xp, yp))
+    # print(zip(xp, yp))
 
     path = zip(xp, yp)
 

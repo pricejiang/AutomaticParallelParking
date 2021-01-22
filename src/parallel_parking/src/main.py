@@ -13,7 +13,6 @@ import pickle
 
 
 def run_model(model_name):
-    global centerTheta
 
     rate = rospy.Rate(10)  # 100 Hz
     constructedMap = None
@@ -23,9 +22,9 @@ def run_model(model_name):
         constructedMap = perceptionModule.lidarReading()
     controlModule = VehicleController(model_name)
 
-    centerTheta = decisionModule.parkingDecision(constructedMap)
+    centerTheta, parkSide = decisionModule.parkingDecision(constructedMap)
 
-    flag = 0
+    flag = -parkSide
     idx = 0
     currState =  perceptionModule.gpsReading()
 
@@ -38,6 +37,7 @@ def run_model(model_name):
     centerTheta += init_euler
     refState = [flag, -1.39136710179663975]
     controlModule.execute(currState, refState)
+    print("parkSide:", parkSide)
     print("centerTheta: ", centerTheta)
     while not rospy.is_shutdown():
         # res = sensors.lidarReading()
@@ -56,8 +56,9 @@ def run_model(model_name):
 
         print("Current heading: ", currentEuler[2])
         print("flag is ", flag)
-        if currentEuler[2] > centerTheta and not flag:
-            flag = 1
+        if flag == -parkSide:
+            if (parkSide == 1 and currentEuler[2] > centerTheta) or (parkSide == -1 and currentEuler[2] < -centerTheta): 
+                flag *= -1
 
         refState = [flag, -1.39136710179663975]
         controlModule.execute(currState, refState)
@@ -65,7 +66,7 @@ def run_model(model_name):
         # if abs(currentEuler[2] - theta[idx]) < 0.05:
         print("idx: ", idx)
 
-        if flag and abs(init_euler-currentEuler[2]) < 0.1:
+        if flag == parkSide and abs(init_euler-currentEuler[2]) < 0.1:
             controlModule.forward()
             break
         print()

@@ -181,7 +181,7 @@ class LidarProcessing:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
         self.grid[self.vehicle_x/10][self.vehicle_y/10] = self.grid.CUR
-        print(self.vehicle_x/10, self.vehicle_y/10)
+        # print(self.vehicle_x/10, self.vehicle_y/10)
         for i in range(im.shape[0]):
             for j in range(im.shape[1]):
                 if im[i][j] != 0:

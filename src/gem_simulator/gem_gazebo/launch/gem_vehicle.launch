@@ -27,7 +27,7 @@
   <group ns="$(arg namespace)">
 
     <!-- Create the world. -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- <include file="$(find gazebo_ros)/launch/empty_world.launch">
       <arg name="paused" value="$(arg paused)"/>
       <arg name="use_sim_time" value="$(arg use_sim_time)"/>
       <arg name="gui" value="$(arg gui)"/>
@@ -35,7 +35,7 @@
       <arg name="debug" value="$(arg debug)"/>
       <arg name="verbose" value="$(arg verbose)"/>
       <arg name="world_name" value="$(find gem_gazebo)/worlds/$(arg world_name)"/>
-    </include>
+    </include> -->
 
     <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"
           args="-param robot_description -model $(arg name) -urdf -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
@@ -65,7 +65,7 @@
     <include file="$(find gem_pcl)/launch/gem_pcl.launch" />
     -->
 
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gem_description)/config_rviz/gem_velodyne.rviz" />
+    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gem_description)/config_rviz/gem_velodyne.rviz" /> -->
     
   </group>
 

@@ -39,7 +39,7 @@ class VehicleController():
                                            currentPose.pose.orientation.z,
                                            currentPose.pose.orientation.w)
 
-        print("target ", targetPose )
+        # print("target ", targetPose )
         target_v = targetPose[1]
         target_orientation = targetPose[0]
 
@@ -57,7 +57,7 @@ class VehicleController():
         v = vError*k_ds
         delta = k_theta*thetaError
 
-        if target_orientation == 0:
+        if target_orientation == -1:
             delta = -0.57
         else:
             delta = 0.57
@@ -66,5 +66,5 @@ class VehicleController():
         newAckermannCmd = AckermannDrive()
         newAckermannCmd.speed = v
         newAckermannCmd.steering_angle = delta
-        print(newAckermannCmd)
+        # print(newAckermannCmd)
         self.controlPub.publish(newAckermannCmd)
