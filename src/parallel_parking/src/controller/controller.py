@@ -7,7 +7,7 @@ class VehicleController():
 
     def __init__(self, model_name='gem'):
         # Publisher to publish the control input to the vehicle model
-        self.controlPub = rospy.Publisher("/ackermann_cmd", AckermannDrive, queue_size = 1)
+        self.controlPub = rospy.Publisher("/gem/ackermann_cmd", AckermannDrive, queue_size = 1)
         self.model_name = model_name
 
     def stop(self):

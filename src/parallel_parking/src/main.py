@@ -11,21 +11,26 @@ from std_msgs.msg import Float32
 import time
 import pickle
 
+verbose = False
 
-def run_model(model_name):
-
-    rate = rospy.Rate(10)  # 100 Hz
-    constructedMap = None
+def main(model_name):
     perceptionModule = VehiclePerception(model_name)
     decisionModule = VehicleDecision()
+    controlModule = VehicleController(model_name)
+    parkCar(perceptionModule, decisionModule, controlModule)
+
+def parkCar(perceptionModule, decisionModule, controlModule):
+    rate = rospy.Rate(10)  # 10 Hz
+    constructedMap = None
+    # perceptionModule = VehiclePerception(model_name)
+    # decisionModule = VehicleDecision()
     while constructedMap == None:
         constructedMap = perceptionModule.lidarReading()
-    controlModule = VehicleController(model_name)
+    # controlModule = VehicleController(model_name)
 
     centerTheta, parkSide = decisionModule.parkingDecision(constructedMap)
 
     flag = -parkSide
-    idx = 0
     currState =  perceptionModule.gpsReading()
 
     currentEuler = quaternion_to_euler(currState.pose.orientation.x,
@@ -37,13 +42,12 @@ def run_model(model_name):
     centerTheta += init_euler
     refState = [flag, -1.39136710179663975]
     controlModule.execute(currState, refState)
+
     print("parkSide:", parkSide)
     print("centerTheta: ", centerTheta)
+
     while not rospy.is_shutdown():
-        # res = sensors.lidarReading()
-        if centerTheta == 0:
-            continue
-        # print(res)
+
         rate.sleep()  # Wait a while before trying to get a new state
 
         # Get the current position and orientation of the vehicle
@@ -53,27 +57,23 @@ def run_model(model_name):
                                            currState.pose.orientation.y,
                                            currState.pose.orientation.z,
                                            currState.pose.orientation.w)
+        if verbose:
+            print("Current heading: ", currentEuler[2])
+            print("flag is ", flag)
 
-        print("Current heading: ", currentEuler[2])
-        print("flag is ", flag)
         if flag == -parkSide:
-            if (parkSide == 1 and currentEuler[2] > centerTheta) or (parkSide == -1 and currentEuler[2] < -centerTheta): 
+            if (parkSide == 1 and currentEuler[2] > centerTheta) or (parkSide == -1 and currentEuler[2] < -centerTheta):
                 flag *= -1
 
         refState = [flag, -1.39136710179663975]
         controlModule.execute(currState, refState)
 
-        # if abs(currentEuler[2] - theta[idx]) < 0.05:
-        print("idx: ", idx)
-
         if flag == parkSide and abs(init_euler-currentEuler[2]) < 0.1:
             controlModule.forward()
             break
-        print()
-
-
+        # print(" ")
 
 if __name__ == "__main__":
     rospy.init_node("gem_dynamics")
 
-    run_model('gem')
+    main('gem')

@@ -12,10 +12,10 @@ import copy
 import matplotlib.pyplot as plt
 
 class VehiclePerception:
-    def __init__(self, model_name='gem', resolution=0.1, side_range=(-20., 20.), 
+    def __init__(self, model_name='gem', resolution=0.1, side_range=(-20., 20.),
             fwd_range=(-20., 20.), height_range=(-1.6, 0.5)):
         self.lidar = LidarProcessing(resolution=resolution, side_range=side_range, fwd_range=fwd_range, height_range=height_range)
-        
+
         self.bridge = CvBridge()
         # self.cameraSub = rospy.Subscriber("/front_single_camera/front_single_camera/image_raw", Image, self.imageCallback)
         self.raw_image = None
@@ -27,9 +27,9 @@ class VehiclePerception:
     #         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
     #     except CvBridgeError as e:
     #         print(e)
-        
+
     #     self.raw_img = cv_image.copy()
-    
+
     def cameraReading(self):
         # Get a image from the camera on the vehicle
         # Input: None
@@ -66,7 +66,7 @@ class LidarProcessing:
         self.side_range = side_range
         self.fwd_range = fwd_range
         self.height_range = height_range
-        
+
         self.cvBridge = CvBridge()
 
         # empty initial image
@@ -81,25 +81,9 @@ class LidarProcessing:
         self.grid = GridMap()
 
         self.constructedMap = None
-        
+
         self.x_front = float('nan')
         self.y_front = float('nan')
-
-    # def gpsReading(self):
-    #     # Get the current state of the vehicle
-    #     # Input: None
-    #     # Output: ModelState, the state of the vehicle, contain the
-    #     #   position, orientation, linear velocity, angular velocity
-    #     #   of the vehicle
-    #     rospy.wait_for_service('/gazebo/get_model_state')
-    #     try:
-    #         serviceResponse = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-    #         modelState = serviceResponse(model_name="gem")
-    #     except rospy.ServiceException as exc:
-    #         rospy.loginfo("Service did not process request: "+str(exc))
-    #         modelState = GetModelStateResponse()
-    #         modelState.success = False
-    #     return modelState
 
     def __pointCloudHandler(self, data):
         """
@@ -165,7 +149,7 @@ class LidarProcessing:
         pixel_vals = np.clip(a=z_points, a_min=self.height_range[0], a_max=self.height_range[1])
 
         pixel_vals = scale_to_255(pixel_vals, min_val=self.height_range[0], max_val=self.height_range[1])
-        
+
         # convert points to image coords with resolution
         x_img = np.floor(-y_points / self.resolution).astype(np.int32)
         y_img = np.floor(-x_points / self.resolution).astype(np.int32)
@@ -173,12 +157,9 @@ class LidarProcessing:
         # shift coords to new original
         x_img -= int(np.floor(self.side_range[0] / self.resolution))
         y_img += int(np.ceil(self.fwd_range[1] / self.resolution))
-            
+
         # Generate a visualization for the perception result
         im[y_img, x_img] = pixel_vals
-
-        img = im.astype(np.uint8)
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
         self.grid[self.vehicle_x/10][self.vehicle_y/10] = self.grid.CUR
         # print(self.vehicle_x/10, self.vehicle_y/10)
@@ -186,9 +167,9 @@ class LidarProcessing:
             for j in range(im.shape[1]):
                 if im[i][j] != 0:
                     x = i / 10
-                    y = j / 10 
+                    y = j / 10
                     self.grid[x][y] = self.grid.OCCUPIED
-        
+
         self.constructedMap = self.grid.constructMap()
 
     def get_lidar_reading(self):

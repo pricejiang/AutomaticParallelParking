@@ -20,13 +20,13 @@
 
   <!-- Spawn the GEM CAR -->
   <include file="$(find gem_gazebo)/launch/gem_vehicle.launch">
-    <!-- <arg name="namespace" value="/gem"/> -->
+    <arg name="namespace" value="/gem"/>
     <arg name="x" value="0.0"/>
     <arg name="y" value="-98"/>
     <arg name="z" value="1.0"/>
   </include>
 
   <!-- RViz -->
-  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gem_description)/config_rviz/gem_velodyne.rviz" /> -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gem_description)/config_rviz/gem_velodyne.rviz" />
 
 </launch>
