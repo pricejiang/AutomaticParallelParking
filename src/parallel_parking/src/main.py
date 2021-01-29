@@ -22,12 +22,8 @@ def main(model_name):
 def parkCar(perceptionModule, decisionModule, controlModule):
     rate = rospy.Rate(10)  # 10 Hz
     constructedMap = None
-    # perceptionModule = VehiclePerception(model_name)
-    # decisionModule = VehicleDecision()
     while constructedMap == None:
         constructedMap = perceptionModule.lidarReading()
-    # controlModule = VehicleController(model_name)
-
     centerTheta, parkSide = decisionModule.parkingDecision(constructedMap)
 
     flag = -parkSide
@@ -69,9 +65,14 @@ def parkCar(perceptionModule, decisionModule, controlModule):
         controlModule.execute(currState, refState)
 
         if flag == parkSide and abs(init_euler-currentEuler[2]) < 0.1:
-            controlModule.forward()
-            break
-        # print(" ")
+            minFrontDist, minBackDist = perceptionModule.getParkDistance()
+            if abs(minFrontDist-minBackDist) < 0.1:
+                controlModule.stop()
+                break
+            elif minBackDist < 2.3:
+                controlModule.foward()
+            elif minFrontDist < 2.3:
+                controlModule.backword()
 
 if __name__ == "__main__":
     rospy.init_node("gem_dynamics")

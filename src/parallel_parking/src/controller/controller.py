@@ -25,6 +25,13 @@ class VehicleController():
 
         self.controlPub.publish(newAckermannCmd)
 
+    def backword(self):
+        newAckermannCmd = AckermannDrive()
+        newAckermannCmd.speed = -1
+        newAckermannCmd.steering_angle = 0
+
+        self.controlPub.publish(newAckermannCmd)
+
     def execute(self, currentPose, targetPose):
         """
             This function takes the current state of the vehicle and

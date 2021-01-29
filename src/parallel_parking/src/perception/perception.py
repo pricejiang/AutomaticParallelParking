@@ -40,8 +40,11 @@ class VehiclePerception:
         # Get processed reading from the Lidar on the vehicle
         # Input: None
         # Output: Distance between the vehicle and object in the front
-        res = self.lidar.get_lidar_reading() # self.lidar.processLidar()
+        res = self.lidar.getConstructedMap() # self.lidar.processLidar()
         return res
+
+    def getParkDistance(self):
+        return self.lidar.minFrontDist, self.lidar.minBackDist
 
     def gpsReading(self):
         # Get the current state of the vehicle
@@ -81,9 +84,12 @@ class LidarProcessing:
         self.grid = GridMap()
 
         self.constructedMap = None
+        self.minBackDist = None
+        self.minFrontDist = None
 
-        self.x_front = float('nan')
-        self.y_front = float('nan')
+
+        # self.x_front = float('nan')
+        # self.y_front = float('nan')
 
     def __pointCloudHandler(self, data):
         """
@@ -101,9 +107,9 @@ class LidarProcessing:
         for p in gen:
             lidarPtBV.append((p[0],p[1],p[2]))
 
-        self.construct_birds_eye_view(lidarPtBV)
+        self.processLidar(lidarPtBV)
 
-    def construct_birds_eye_view(self, data):
+    def processLidar(self, data):
         """
             Call back function that get the distance between vehicle and nearest wall in given direction
             The calculated values are stored in the class member variables
@@ -124,6 +130,8 @@ class LidarProcessing:
         x_points = data[:, 0]
         y_points = data[:, 1]
         z_points = data[:, 2]
+
+
 
         # Only keep points in the range specified above
         x_filter = np.logical_and((x_points >= self.fwd_range[0]), (x_points <= self.fwd_range[1]))
@@ -161,6 +169,32 @@ class LidarProcessing:
         # Generate a visualization for the perception result
         im[y_img, x_img] = pixel_vals
 
+
+
+        points = np.where(im!=0)
+        # im[y_img, x_img] = 0
+        ids = np.array(zip(points[0], points[1]))
+
+        # Get back points
+        backids = ids[np.where(ids[:, 0] > 200)]
+        backids = backids[np.where(backids[:, 1] < 220)]
+        backids = backids[np.where(backids[:, 1] > 180)]
+        # im[backids[:,0], backids[:,1]] = 255
+        if backids.size != 0:
+            minBackID = backids[np.argmin(np.sqrt(np.sum((backids - (200,200))**2, axis=1)))]
+            self.minBackDist = np.sqrt(np.sum((minBackID - (200,200))**2))/10
+        print("back dist: ", self.minBackDist)
+        # Get front points
+        frontids = ids[np.where(ids[:, 0] < 200)]
+        frontids = frontids[np.where(frontids[:, 1] < 220)]
+        frontids = frontids[np.where(frontids[:, 1] > 180)]
+        # im[frontids[:,0], frontids[:,1]] = 255
+        if frontids.size != 0:
+            minFrontID = frontids[np.argmin(np.sqrt(np.sum((frontids - (200,200))**2, axis=1)))]
+            self.minFrontDist = np.sqrt(np.sum((minFrontID - (200,200))**2))/10
+
+        print("front dist: ", self.minFrontDist)
+
         self.grid[self.vehicle_x/10][self.vehicle_y/10] = self.grid.CUR
         # print(self.vehicle_x/10, self.vehicle_y/10)
         for i in range(im.shape[0]):
@@ -172,8 +206,10 @@ class LidarProcessing:
 
         self.constructedMap = self.grid.constructMap()
 
-    def get_lidar_reading(self):
+    def getConstructedMap(self):
         return self.constructedMap
+
+
 
 if __name__ == "__main__":
 
